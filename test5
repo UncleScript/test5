@@ -1,0 +1,63 @@
+
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Workspace = game:GetService("Workspace")
+
+local player = Players.LocalPlayer
+local PlayerGui = player:WaitForChild("PlayerGui")
+
+-- UI for Hatch Notification
+local screenGui = Instance.new("ScreenGui", PlayerGui)
+screenGui.Name = "VisualHatchUI"
+
+local hatchFrame = Instance.new("Frame", screenGui)
+hatchFrame.Size = UDim2.new(0, 300, 0, 100)
+hatchFrame.Position = UDim2.new(0.5, -150, 0.4, 0)
+hatchFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 60)
+hatchFrame.BackgroundTransparency = 0.1
+Instance.new("UICorner", hatchFrame).CornerRadius = UDim.new(0, 12)
+
+local hatchLabel = Instance.new("TextLabel", hatchFrame)
+hatchLabel.Size = UDim2.new(1, 0, 1, 0)
+hatchLabel.Text = "🐣 Pet Hatched!"
+hatchLabel.Font = Enum.Font.FredokaOne
+hatchLabel.TextColor3 = Color3.fromRGB(255, 255, 0)
+hatchLabel.TextScaled = true
+hatchLabel.BackgroundTransparency = 1
+
+-- Hatch Animation
+local function playHatchEffect(petName)
+    hatchLabel.Text = "🐣 " .. petName .. " Hatched!"
+    hatchFrame.Position = UDim2.new(0.5, -150, 0.4, 0)
+    hatchFrame.Visible = true
+
+    local fadeIn = TweenService:Create(hatchFrame, TweenInfo.new(0.5), {BackgroundTransparency = 0.1})
+    local fadeOut = TweenService:Create(hatchFrame, TweenInfo.new(0.5), {BackgroundTransparency = 1})
+
+    fadeIn:Play()
+    fadeIn.Completed:Wait()
+    wait(2)
+    fadeOut:Play()
+    fadeOut.Completed:Wait()
+    hatchFrame.Visible = false
+end
+
+-- Detect Hatch
+local function monitorEggs()
+    for _, egg in pairs(Workspace:GetDescendants()) do
+        if egg:IsA("Model") and egg:FindFirstChild("HatchEffect") then
+            egg.HatchEffect:GetPropertyChangedSignal("Enabled"):Connect(function()
+                if egg.HatchEffect.Enabled then
+                    local petName = egg.Name
+                    playHatchEffect(petName)
+                end
+            end)
+        end
+    end
+end
+
+monitorEggs()
+
+-- Credit
+print("Visual Hatch Script loaded by Uncle Script")
