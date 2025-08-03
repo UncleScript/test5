@@ -1,39 +1,64 @@
-
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Workspace = game:GetService("Workspace")
-
 local player = Players.LocalPlayer
 local PlayerGui = player:WaitForChild("PlayerGui")
 
--- UI for Hatch Notification
+-- GUI Setup
 local screenGui = Instance.new("ScreenGui", PlayerGui)
-screenGui.Name = "VisualHatchUI"
+screenGui.Name = "EnhancedVisualHatch"
 
 local hatchFrame = Instance.new("Frame", screenGui)
-hatchFrame.Size = UDim2.new(0, 300, 0, 100)
-hatchFrame.Position = UDim2.new(0.5, -150, 0.4, 0)
-hatchFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 60)
-hatchFrame.BackgroundTransparency = 0.1
+hatchFrame.Size = UDim2.new(0, 360, 0, 180)
+hatchFrame.Position = UDim2.new(0.5, -180, 0.4, 0)
+hatchFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 40)
+hatchFrame.BackgroundTransparency = 1
+hatchFrame.Visible = false
 Instance.new("UICorner", hatchFrame).CornerRadius = UDim.new(0, 12)
 
 local hatchLabel = Instance.new("TextLabel", hatchFrame)
-hatchLabel.Size = UDim2.new(1, 0, 1, 0)
-hatchLabel.Text = "🐣 Pet Hatched!"
+hatchLabel.Size = UDim2.new(1, 0, 0, 40)
+hatchLabel.Position = UDim2.new(0, 0, 0, 0)
+hatchLabel.Text = ""
 hatchLabel.Font = Enum.Font.FredokaOne
-hatchLabel.TextColor3 = Color3.fromRGB(255, 255, 0)
+hatchLabel.TextColor3 = Color3.fromRGB(255, 255, 100)
 hatchLabel.TextScaled = true
 hatchLabel.BackgroundTransparency = 1
 
--- Hatch Animation
-local function playHatchEffect(petName)
-    hatchLabel.Text = "🐣 " .. petName .. " Hatched!"
-    hatchFrame.Position = UDim2.new(0.5, -150, 0.4, 0)
-    hatchFrame.Visible = true
+local petImage = Instance.new("ImageLabel", hatchFrame)
+petImage.Size = UDim2.new(0, 100, 0, 100)
+petImage.Position = UDim2.new(0.5, -50, 0, 50)
+petImage.BackgroundTransparency = 1
+petImage.Image = "rbxassetid://0"
 
-    local fadeIn = TweenService:Create(hatchFrame, TweenInfo.new(0.5), {BackgroundTransparency = 0.1})
-    local fadeOut = TweenService:Create(hatchFrame, TweenInfo.new(0.5), {BackgroundTransparency = 1})
+local mutationLabel = Instance.new("TextLabel", hatchFrame)
+mutationLabel.Size = UDim2.new(1, 0, 0, 30)
+mutationLabel.Position = UDim2.new(0, 0, 1, -30)
+mutationLabel.Text = ""
+mutationLabel.Font = Enum.Font.GothamBold
+mutationLabel.TextColor3 = Color3.fromRGB(200, 100, 255)
+mutationLabel.TextScaled = true
+mutationLabel.BackgroundTransparency = 1
+
+-- Image mapping (sample only; add real asset IDs)
+local petImages = {
+    ["Dog"] = "rbxassetid://1234567890",
+    ["Bunny"] = "rbxassetid://1234567891",
+    ["Golden Lab"] = "rbxassetid://1234567892",
+    -- Add more pets and correct asset IDs
+}
+
+-- Animation function
+local function playHatchEffect(petName, isMutated)
+    hatchLabel.Text = "🎉 " .. petName .. " Hatched!"
+    mutationLabel.Text = isMutated and "🧬 Mutation Detected!" or ""
+    petImage.Image = petImages[petName] or "rbxassetid://0"
+
+    hatchFrame.Visible = true
+    hatchFrame.BackgroundTransparency = 1
+
+    local fadeIn = TweenService:Create(hatchFrame, TweenInfo.new(0.5), { BackgroundTransparency = 0.1 })
+    local fadeOut = TweenService:Create(hatchFrame, TweenInfo.new(0.5), { BackgroundTransparency = 1 })
 
     fadeIn:Play()
     fadeIn.Completed:Wait()
@@ -43,21 +68,33 @@ local function playHatchEffect(petName)
     hatchFrame.Visible = false
 end
 
--- Detect Hatch
-local function monitorEggs()
-    for _, egg in pairs(Workspace:GetDescendants()) do
-        if egg:IsA("Model") and egg:FindFirstChild("HatchEffect") then
-            egg.HatchEffect:GetPropertyChangedSignal("Enabled"):Connect(function()
-                if egg.HatchEffect.Enabled then
-                    local petName = egg.Name
-                    playHatchEffect(petName)
+-- Monitor hatches
+local knownEggs = {}
+local function detectEggHatch()
+    while true do
+        for _, obj in pairs(Workspace:GetDescendants()) do
+            if obj:IsA("Model") and obj:FindFirstChild("ReadyToHatch") then
+                local hatchFlag = obj.ReadyToHatch
+                if not knownEggs[obj] and hatchFlag.Value == true then
+                    knownEggs[obj] = true
+                    local petName = obj.Name or "Unknown Pet"
+                    local isMutated = obj:FindFirstChild("Mutation") and obj.Mutation.Value == true
+                    playHatchEffect(petName, isMutated)
                 end
-            end)
+            end
         end
+        task.wait(1)
     end
 end
 
-monitorEggs()
+task.spawn(detectEggHatch)
 
--- Credit
-print("Visual Hatch Script loaded by Uncle Script")
+-- Credit Label
+local credit = Instance.new("TextLabel", screenGui)
+credit.Size = UDim2.new(0, 200, 0, 20)
+credit.Position = UDim2.new(1, -210, 1, -30)
+credit.Text = "🐾 Made by Uncle Script"
+credit.Font = Enum.Font.Gotham
+credit.TextSize = 14
+credit.TextColor3 = Color3.fromRGB(255, 255, 255)
+credit.BackgroundTransparency = 1
